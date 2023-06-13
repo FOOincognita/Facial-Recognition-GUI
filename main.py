@@ -5,10 +5,9 @@ from PyQt6.QtWidgets import (QLabel, QComboBox, QMainWindow, QWidget,
                              QVBoxLayout, QHBoxLayout, QApplication)
 from pygrabber.dshow_graph import FilterGraph as graph
 from qdarktheme import setup_theme as setTheme
-from PyQt6 import QtGui
 from PyQt6.QtGui import QImage, QPixmap
 from PyQt6.QtCore import QTimer, Qt
-from sys import argv, exit as sysExit
+import sys
 
 COLORS = [
     (0, 0, 255),    # Red
@@ -30,7 +29,7 @@ class MainWindow(QMainWindow):
 
         # Cam Select Dropdown
         self.cam = QComboBox(self)
-        self.cam.addItems(self.getCams().values())
+        self.cam.addItems([c for c in graph().get_input_devices()])
         self.cam.currentIndexChanged.connect(self.setCam)
 
         # Rectangle Select Dropdown
@@ -62,10 +61,9 @@ class MainWindow(QMainWindow):
     def update(self):
         ret, frame = self.cap.read()
         if not ret: return
-
-        # Draw Rectangle 
+ 
         for (x, y, w, h) in self.detectMS(cvtColor(frame, BGR2GRY), scaleFactor=1.1, minNeighbors=5):
-            rectangle(frame, (x, y), (x+w, y+h), self.rColor, 2)
+            rectangle(frame, (x, y), (x+w, y+h), self.rColor, 3)
 
         # Display the resulting frame
         img = cvtColor(frame, BGR2RGB)
@@ -87,16 +85,12 @@ class MainWindow(QMainWindow):
         self.vertLayout.addWidget(self.label)
 
         MainWin.setCentralWidget(self.mainWidget)
-        
-    @staticmethod
-    def getCams():
-        return {id:name for id, name in enumerate(graph().get_input_devices())}
 
 
 if __name__ == "__main__":
-    APP = QApplication(argv)
+    APP = QApplication(sys.argv)
     setTheme()
     WINDOW = MainWindow()
     WINDOW.setWindowTitle('Face Detection')
     WINDOW.show()
-    sysExit(APP.exec())
+    sys.exit(APP.exec())
